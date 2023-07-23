@@ -1,4 +1,4 @@
-- name: execute py script
-  env: 
-        API_KEY: ${{ secrets.SPOTIPY_CLIENT_ID }}
-        SECRET_KEY: ${{ secrets.SPOTIPY_SECRET }}
+name: execute py script
+env: 
+  API_KEY: ${{ secrets.SPOTIPY_CLIENT_ID }}
+  SECRET_KEY: ${{ secrets.SPOTIPY_SECRET }}
