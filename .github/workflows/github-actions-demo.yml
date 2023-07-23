@@ -3,9 +3,17 @@ name: execute py script
 on:
   workflow_dispatch
 
+env:
+  API_KEY: ${{ secrets.SPOTIPY_CLIENT_ID }}
+  SECRET_KEY: ${{ secrets.SPOTIPY_SECRET }}
+
 jobs:
   variable_setup:
     runs-on: ubuntu-latest
     env: 
-      API_KEY: ${{ secrets.SPOTIPY_CLIENT_ID }}
-      SECRET_KEY: ${{ secrets.SPOTIPY_SECRET }}
+      PRINT_MESSAGE: testing
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '^3.9'
