@@ -1,0 +1,46 @@
+import pandas as pd
+import spotipy
+
+
+def get_playlist_track_features(
+    spotipy_client: spotipy.Spotify,
+    playlist_uri: str
+) -> pd.DataFrame:
+    """
+    A function which returns the audio features for every track in a Spotify playlist
+    
+    Arguments:
+        spotipy_client (spotipy.Spotify): the spotipy client being used for the session
+        playlist_uri (str): the uri for a particular Spotify playlist
+        
+    Returns:
+        pd.DataFrame: a dataframe containing the audio features for every track in the playlist
+    """
+
+    # get all tracks in a particular playlist
+    playlist_tracks_dict = spotipy_client.playlist_tracks(playlist_uri)
+    
+    # store audio features of each track in a list, so that we end up with a list of dictionaries, which can be used to create a dataframe
+    # we can only extract 100 tracks from the `playlist_tracks_dict` dictionary at any one time, therefore we have to get the next 'page' by calling
+    # the `next` function until we have looped through every 'page'.
+    # using this, we assemble a list of track IDs and we then get the audio features for those 100 tracks (note: we cannot get audio features)
+    # for more than 100 tracks at a time
+    track_audio_features_list = []
+    counter = 1
+    while playlist_tracks_dict.get('next'):
+        if counter > 1:
+            playlist_tracks_dict = spotipy_client.next(playlist_tracks_dict)
+        
+        track_id_list = []
+        for track_dict in playlist_tracks_dict.get('items'):
+            track_id_list += [track_dict.get('track').get('id')]
+
+        track_audio_features_list += spotipy_client.audio_features([track_id for track_id in track_id_list if isinstance(track_id, str)])
+        
+        counter += 1
+    
+    # the dictionaries for some tracks come through as `None`, so we remove them here to prevent errors when trying to
+    # convert to a dataframe
+    track_audio_features_list = [track_audio_features for track_audio_features in track_audio_features_list if track_audio_features is not None]
+    
+    return pd.DataFrame(track_audio_features_list)
