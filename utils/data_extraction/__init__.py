@@ -26,6 +26,7 @@ def get_playlist_track_features(
     # using this, we assemble a list of track IDs and we then get the audio features for those 100 tracks (note: we cannot get audio features)
     # for more than 100 tracks at a time
     track_audio_features_list = []
+    track_name_list = []
     label_list = []
     if playlist_tracks_dict.get('next'):
         counter = 1
@@ -45,7 +46,10 @@ def get_playlist_track_features(
                     int(ii * len(track_id_list) / num_chunks): 
                     int((ii + 1) * len(track_id_list) / num_chunks)
                 ]
-                album_id_list = [album_dict.get('album').get('id') for album_dict in spotipy_client.tracks(track_id_sublist).get('tracks')]
+                
+                # store track names to check later 
+                # track_name_list += [track_dict.get('name') for track_dict in spotipy_client.tracks(track_id_sublist).get('tracks')]
+                album_id_list = [track_dict.get('album').get('id') for track_dict in spotipy_client.tracks(track_id_sublist).get('tracks')]
                 label_list += [album_dict.get('label') for album_dict in spotipy_client.albums(album_id_list).get('albums')]    
             
             track_audio_features_list += spotipy_client.audio_features([track_id for track_id in track_id_list if isinstance(track_id, str)])
@@ -64,6 +68,9 @@ def get_playlist_track_features(
                 int(ii * len(track_id_list) / num_chunks): 
                 int((ii + 1) * len(track_id_list) / num_chunks)
             ]
+            
+            # store track names to check later 
+            # track_name_list += [track_dict.get('name') for track_dict in spotipy_client.tracks(track_id_sublist).get('tracks')]
             album_id_list = [album_dict.get('album').get('id') for album_dict in spotipy_client.tracks(track_id_sublist).get('tracks')]
             label_list += [album_dict.get('label') for album_dict in spotipy_client.albums(album_id_list).get('albums')]    
             
@@ -74,6 +81,7 @@ def get_playlist_track_features(
     track_audio_features_list = [track_audio_features for track_audio_features in track_audio_features_list if track_audio_features is not None]
     
     df_output = pd.DataFrame(track_audio_features_list)
+    df_output['track_name'] = track_name_list
     df_output['label'] = label_list
     
     return df_output
