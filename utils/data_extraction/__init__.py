@@ -26,21 +26,40 @@ def get_playlist_track_features(
     # using this, we assemble a list of track IDs and we then get the audio features for those 100 tracks (note: we cannot get audio features)
     # for more than 100 tracks at a time
     track_audio_features_list = []
-    counter = 1
-    while playlist_tracks_dict.get('next'):
-        if counter > 1:
-            playlist_tracks_dict = spotipy_client.next(playlist_tracks_dict)
-        
+    label_list = []
+    if playlist_tracks_dict.get('next'):
+        counter = 1
+        while playlist_tracks_dict.get('next'):
+            if counter > 1:
+                playlist_tracks_dict = spotipy_client.next(playlist_tracks_dict)
+
+            track_id_list = []
+            for track_dict in playlist_tracks_dict.get('items'):
+                track_id_list += [track_dict.get('track').get('id')]
+
+            # we cannot access the information for every track at once due to request constraints, therefore
+            # we will do this in smaller chunks
+            album_id_list = [album_dict.get('album').get('id') for album_dict in spotipy_client.tracks(track_id_list).get('tracks')]
+            label_list += [album_dict.get('label') for album_dict in spotipy_client.albums(album_id_list).get('albums')]    
+            
+            track_audio_features_list += spotipy_client.audio_features([track_id for track_id in track_id_list if isinstance(track_id, str)])
+
+            counter += 1
+    else:
         track_id_list = []
         for track_dict in playlist_tracks_dict.get('items'):
             track_id_list += [track_dict.get('track').get('id')]
 
+        album_id_list = [album_dict.get('album').get('id') for album_dict in spotipy_client.tracks(track_id_list).get('tracks')]
+        label_list += [album_dict.get('label') for album_dict in spotipy_client.albums(album_id_list).get('albums')]
+            
         track_audio_features_list += spotipy_client.audio_features([track_id for track_id in track_id_list if isinstance(track_id, str)])
-        
-        counter += 1
     
     # the dictionaries for some tracks come through as `None`, so we remove them here to prevent errors when trying to
     # convert to a dataframe
     track_audio_features_list = [track_audio_features for track_audio_features in track_audio_features_list if track_audio_features is not None]
     
-    return pd.DataFrame(track_audio_features_list)
+    df_output = pd.DataFrame(track_audio_features_list)
+    df_output['label'] = label_list
+    
+    return df_output
