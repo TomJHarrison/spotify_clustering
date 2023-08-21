@@ -1,10 +1,14 @@
+import numpy as np
+import os
 import pandas as pd
 import spotipy
 
+from itertools import compress
 
 def get_playlist_track_features(
     spotipy_client: spotipy.Spotify,
-    playlist_uri: str
+    playlist_uri: str,
+    out_path: str
 ) -> pd.DataFrame:
     """
     A function which returns the audio features for every track in a Spotify playlist
@@ -12,11 +16,19 @@ def get_playlist_track_features(
     Arguments:
         spotipy_client (spotipy.Spotify): the spotipy client being used for the session
         playlist_uri (str): the uri for a particular Spotify playlist
+        out_path (str): the file location where the output dataframe should be saved
         
     Returns:
         pd.DataFrame: a dataframe containing the audio features for every track in the playlist
     """
 
+    # if dataframe has already been saved at the specified path, we read it in rather than calling the data using spotipy
+    # as it is time-consuming
+    if os.path.exists(out_path):
+        df_output = pd.read_csv(out_path)
+        return df_output
+    
+    
     # get all tracks in a particular playlist
     playlist_tracks_dict = spotipy_client.playlist_tracks(playlist_uri)
     
@@ -85,7 +97,8 @@ def get_playlist_track_features(
     label_list = list(compress(label_list, mask))
     
     df_output = pd.DataFrame(track_audio_features_list)
-    
     df_output['label'] = label_list
+    
+    df_output.to_csv(out_path)
     
     return df_output
