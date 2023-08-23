@@ -28,7 +28,6 @@ def get_playlist_track_features(
         df_output = pd.read_csv(out_path)
         return df_output
     
-    
     # get all tracks in a particular playlist
     playlist_tracks_dict = spotipy_client.playlist_tracks(playlist_uri)
     
@@ -43,6 +42,7 @@ def get_playlist_track_features(
     if playlist_tracks_dict.get('next'):
         counter = 1
         while playlist_tracks_dict.get('next'):
+            
             if counter > 1:
                 playlist_tracks_dict = spotipy_client.next(playlist_tracks_dict)
 
@@ -66,7 +66,7 @@ def get_playlist_track_features(
                 label_list += [album_dict.get('label') if album_dict is not None else None for album_dict in spotipy_client.albums(album_id_list).get('albums')]    
  
             track_audio_features_list += spotipy_client.audio_features([track_id for track_id in track_id_list if isinstance(track_id, str)])
-    
+            print(len(label_list))
             counter += 1
     else:
         track_id_list = []
@@ -99,6 +99,6 @@ def get_playlist_track_features(
     df_output = pd.DataFrame(track_audio_features_list)
     df_output['label'] = label_list
     
-    df_output.to_csv(out_path)
+    df_output.to_csv(out_path, index=False)
     
     return df_output
