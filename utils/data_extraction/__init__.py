@@ -66,7 +66,7 @@ def get_playlist_track_features(
                 label_list += [album_dict.get('label') if album_dict is not None else None for album_dict in spotipy_client.albums(album_id_list).get('albums')]    
  
             track_audio_features_list += spotipy_client.audio_features([track_id for track_id in track_id_list if isinstance(track_id, str)])
-            print(len(label_list))
+
             counter += 1
     else:
         track_id_list = []
